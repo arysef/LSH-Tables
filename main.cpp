@@ -1,5 +1,11 @@
 #include "LSH.h"
 #include <iostream>
+#include <fstream>
+#include <zlib.h>
+#include <stdio.h>
+#include "kseq.h"
+KSEQ_INIT(int, read)
+
 
 int main() {
 
@@ -21,8 +27,19 @@ int main() {
     lsh->top_k(2, 5, q, r);
 
     for (int i; i < 10; i++) {
-        std::cout << r[i] << std::endl;
+        std::cout << r[i] << "\n";
     }
-
+    
+    FILE* fp;
+    kseq_t *seq;
+    int n = 0, slen = 0, qlen = 0;
+    fp = fopen("SRR000001.fastq", "r");
+    seq = kseq_init(fileno(fp));
+    while (kseq_read(seq) >= 0)
+        printf("sequence: %s\n", seq->seq.s);
+    printf("%d\t%d\t%d\n", n, slen, qlen);
+    kseq_destroy(seq);
+    fclose(fp);
     return 0;
+    
 }
