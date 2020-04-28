@@ -30,13 +30,28 @@ int main() {
         std::cout << r[i] << "\n";
     }
     
+    
     FILE* fp;
     kseq_t *seq;
     int n = 0, slen = 0, qlen = 0;
     fp = fopen("SRR000001.fastq", "r");
     seq = kseq_init(fileno(fp));
-    while (kseq_read(seq) >= 0)
-        printf("sequence: %s\n", seq->seq.s);
+    // Reads FASTQ file sequence by sequence
+    while (kseq_read(seq) >= 0){
+        std::string str_seq = std::string(seq->seq.s);
+
+        //Trying to get basic minHash of sequence 
+        int min = INT_MAX;
+        int sub_len = 10;
+        for(int i = 0; i < str_seq.length()-sub_len; i=i+sub_len) {
+            //std::cout << str_seq.substr(i, 1+sub_len);
+            unsigned int cur = std::hash<std::string>{}(str_seq.substr(i, i+sub_len));
+            if (cur < min)
+                min = cur;
+        }
+        //std::cout << "\n Above is put together \n" << str_seq << "\n";
+        std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
+    }
     printf("%d\t%d\t%d\n", n, slen, qlen);
     kseq_destroy(seq);
     fclose(fp);
