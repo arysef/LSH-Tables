@@ -79,7 +79,7 @@ int min3(x, y, z)
 
 int leven_distance(str1, str2, m, n)
 {
-    //dynamic programming
+    //dynamic programming with storing
     //Initializing my dp matrix
     int dp[m + 1][n + 1]; //an extra box for when looking at the empty string prefix of either str1 or str2 or both
 
