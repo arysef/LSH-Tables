@@ -46,14 +46,13 @@ int main() {
 
         //Trying to get basic minHash of sequence 
         int min = INT_MAX;
-        int sub_len = 10;
+        int sub_len = 10; // n-gram, so if sublen is 3 we would be MinHashing based on trigram
         for(int i = 0; i < str_seq.length()-sub_len; i=i+sub_len) {
-            //std::cout << str_seq.substr(i, 1+sub_len);
             unsigned int cur = std::hash<std::string>{}(str_seq.substr(i, i+sub_len));
             if (cur < min)
                 min = cur;
         }
-        //std::cout << "\n Above is put together \n" << str_seq << "\n";
+        //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
         std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
     }
     printf("%d\t%d\t%d\n", n, slen, qlen);
