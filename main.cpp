@@ -4,11 +4,12 @@
 #include <zlib.h>
 #include <stdio.h>
 #include "kseq.h"
+#include <string>
 KSEQ_INIT(int, read)
 
 
-int min3(int x, int y, int z);
-static int leven_distance(string str1, string str2, int m, int n);
+static int min3(int x, int y, int z);
+static int leven_distance(std::string str1, std::string str2, int m, int n);
 
 int main() {
 
@@ -62,9 +63,10 @@ int main() {
     
 }
 
-int min3(x, y, z) 
+int 
+min3(int x, int y, int z) 
 { 
-    return min(min(x, y), z); 
+    return std::min(std::min(x, y), z); 
 } 
 /*
 * Requires:
@@ -77,7 +79,7 @@ int min3(x, y, z)
 *   returns the levenshtein distance as an integer
 */
 
-int leven_distance(str1, str2, m, n)
+int leven_distance(std::string str1, std::string str2, int m, int n)
 {
     //dynamic programming with storing
     //Initializing my dp matrix
@@ -105,5 +107,5 @@ int leven_distance(str1, str2, m, n)
                                     dp[i][j-1]); //insert
         }
     }
-    return dp[m][n];
+    return (dp[m][n]);
 }
