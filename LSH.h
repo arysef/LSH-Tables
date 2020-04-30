@@ -16,6 +16,13 @@ class LSH {
   public:
     LSH();
 
+
+
+
+    //num_items is the number of items we're inserting
+    // items is a pointer to the first item in an array of tems.
+    // hashes is a pointer to an array of all the k*L hashes. 
+    //puts in all the hashes we need to hash 
     void insert(unsigned int num_items, unsigned int *items, unsigned int *hashes);
 
     void insert(unsigned int item, unsigned int *hashes);

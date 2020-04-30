@@ -44,10 +44,25 @@ int main() {
     int n = 0, slen = 0, qlen = 0;
     fp = fopen("SRR000001.fastq", "r");
     seq = kseq_init(fileno(fp));
+    int count = 0;
+    std::string seq0;
+    std::string seq1;
+
     // Reads FASTQ file sequence by sequence
-    while (kseq_read(seq) >= 0){
+    while (kseq_read(seq) >= 0) {
         std::string str_seq = std::string(seq->seq.s);
 
+        //if statements to use to check that the distance metric works for the actual dna data
+        if (count == 0) {
+            seq0 = str_seq;
+        } 
+        if (count == 1) {
+            seq1 = str_seq;
+            //doing the data comparison
+            printf("seq0: %s\n", seq0.c_str());
+            printf("seq1: %s\n", seq1.c_str());
+            std::cout << "dna_seq distance: " <<leven_distance(seq0, seq1) << "\n";
+        }
         //Trying to get basic minHash of sequence 
         int min = INT_MAX;
         int sub_len = 10; // n-gram, so if sublen is 3 we would be MinHashing based on trigram
@@ -56,15 +71,11 @@ int main() {
             if (cur < min)
                 min = cur;
         }
-<<<<<<< HEAD
-        //std::cout << "\n Above is put together \n" << str_seq << "\n";
-        //std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
-=======
         //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
-        std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
->>>>>>> 991c3c9fb2aa32316a469ee56c40a147dc242988
+        //std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
+        count += 1;
     }
-    printf("%d\t%d\t%d\n", n, slen, qlen);
+    //printf("%d\t%d\t%d\n", n, slen, qlen);
     kseq_destroy(seq);
     fclose(fp);
     return 0;
@@ -95,10 +106,10 @@ int leven_distance(std::string str1, std::string str2)
     int n;
     m = (int)strlen(str1.c_str());
     n = (int)strlen(str2.c_str());
-    std::cout << "me: " << m << "\n";
+    //std::cout << "me: " << m << "\n";
     //Initializing my dp matrix
    
-    printf("m,n: %d,%d\n", m, n);
+   // printf("m,n: %d,%d\n", m, n);
     int dp[m + 1][n + 1]; //an extra box for when looking at the empty string prefix of either str1 or str2 or both
 
     //filling matrix
@@ -106,7 +117,7 @@ int leven_distance(std::string str1, std::string str2)
         for (int j = 0; j <= n; j++){
             //if i =0, first string is empty, we need to insert all the characters of string 2 to string 1
             if (i == 0) {
-                printf("i is 0 \n");
+               // printf("i is 0 \n");
                 dp[i][j] = j;
                 continue;
             }
