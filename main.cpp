@@ -5,12 +5,15 @@
 #include <stdio.h>
 #include "kseq.h"
 #include <string>
+#include <map>
+using namespace std;
 KSEQ_INIT(int, read)
 
 
 static int min3(int x, int y, int z);
 static int leven_distance(std::string str1, std::string str2);
-
+//uhh before I do this, I need to figure out how to store a sequence of strings
+static vector<string> brute_topk(int k, std::string query, vector<string> dna_strings);
 int main() {
 
     LSH *lsh = new LSH();
@@ -31,6 +34,7 @@ int main() {
 
     lsh->top_k(2, 5, q, r);
 
+    
     for (int i; i < 10; i++) {
         std::cout << r[i] << "\n";
     }
@@ -47,11 +51,14 @@ int main() {
     int count = 0;
     std::string seq0;
     std::string seq1;
-
+    
+    //I can use a vector to dynamically allocate space for an array
+    // will store all the dna strings 
+    vector<std::string> dna_arr;
     // Reads FASTQ file sequence by sequence
     while (kseq_read(seq) >= 0) {
         std::string str_seq = std::string(seq->seq.s);
-
+        dna_arr.push_back(str_seq);
         //if statements to use to check that the distance metric works for the actual dna data
         if (count == 0) {
             seq0 = str_seq;
@@ -80,6 +87,53 @@ int main() {
     fclose(fp);
     return 0;
     
+}
+
+/*
+* Requires:
+*   k is the number of strings to return
+*   query is the string in question in which we want to find the k strings that are closest to it.
+*   dna_strings is a vector of strings that we will compare to the query
+*
+* Effect:
+*   Finds the top k similar dna strings to the query
+*   Returns of vector of those topk dna sequences
+*/
+static vector<string> brute_topk(int k, std::string query, vector<string> dna_strings) 
+{
+    //creating a mapping to keep track of the distances between each dna string and the query
+    //also the keys of the mapping are ordered so the items are automatically sorted in ascending order 
+    map<int, string> dist_dna_map;
+    vector<string> topk_vec;
+    int min_val;
+    int cnt; // will be used to tell me if we've inserted the k things in the vector already
+    //iterating over the dna sequences
+    for (auto p_dna_seq = dna_strings.begin(); p_dna_seq != dna_strings.end(); ++p_dna_seq) {
+        if (cnt <= k) { //if we haven't gotten k values yet
+            int dist_val = leven_distance(query, *p_dna_seq);
+            //we can just keep inserting the keys
+            dist_dna_map.insert({dist_val, *p_dna_seq});
+            min_val =  dist_dna_map.begin()->first;
+            continue;
+        }
+        //else
+        int dist_val = leven_distance(query, *p_dna_seq);
+        if(dist_val > min_val){ //found an element that belongs in the top k
+            dist_dna_map.erase(min_val);
+            dist_dna_map.insert({dist_val, *p_dna_seq});
+            min_val =  dist_dna_map.begin()->first;
+        }
+        //if the value doesn't belong in the top k, just keep iterating
+        cnt += 1;
+    }
+
+
+    //get put all the dna strings in the map as a vector
+    for(auto it = dist_dna_map.begin(); it != dist_dna_map.end(); ++it) {
+        topk_vec.push_back(it->second);
+    }
+
+    return (topk_vec);
 }
 
 int 
