@@ -26,7 +26,7 @@ int main() {
 
     lsh->insert(9, i, h);
 
-    lsh->view();
+    //lsh->view();
 
     unsigned int q[] = {0, 1, 2, 3, 1, 2, 0, 1};
 
@@ -35,14 +35,14 @@ int main() {
     lsh->top_k(2, 5, q, r);
 
     
-    for (int i; i < 10; i++) {
-        std::cout << r[i] << "\n";
-    }
+    // for (int i; i < 10; i++) {
+    //     std::cout << r[i] << "\n";
+    // }
     
     int test_edit;
 
-    test_edit = leven_distance("oluwapelumi","back");
-    printf("should say 10: %d \n", test_edit); 
+    //test_edit = leven_distance("oluwapelumi","back");
+    //printf("should say 10: %d \n", test_edit); 
     FILE* fp;
     kseq_t *seq;
     int n = 0, slen = 0, qlen = 0;
@@ -58,7 +58,11 @@ int main() {
     // Reads FASTQ file sequence by sequence
     while (kseq_read(seq) >= 0) {
         std::string str_seq = std::string(seq->seq.s);
+
+        if (count < 10) {
         dna_arr.push_back(str_seq);
+        }
+
         //if statements to use to check that the distance metric works for the actual dna data
         if (count == 0) {
             seq0 = str_seq;
@@ -66,9 +70,9 @@ int main() {
         if (count == 1) {
             seq1 = str_seq;
             //doing the data comparison
-            printf("seq0: %s\n", seq0.c_str());
-            printf("seq1: %s\n", seq1.c_str());
-            std::cout << "dna_seq distance: " <<leven_distance(seq0, seq1) << "\n";
+            //printf("seq0: %s\n", seq0.c_str());
+            //printf("seq1: %s\n", seq1.c_str());
+            //std::cout << "dna_seq distance: " <<leven_distance(seq0, seq1) << "\n";
         }
         //Trying to get basic minHash of sequence 
         int min = INT_MAX;
@@ -83,6 +87,7 @@ int main() {
         count += 1;
     }
     //printf("%d\t%d\t%d\n", n, slen, qlen);
+    brute_topk(7, seq0, dna_arr);
     kseq_destroy(seq);
     fclose(fp);
     return 0;
@@ -106,18 +111,24 @@ static vector<string> brute_topk(int k, std::string query, vector<string> dna_st
     map<int, string> dist_dna_map;
     vector<string> topk_vec;
     int min_val;
-    int cnt; // will be used to tell me if we've inserted the k things in the vector already
+    int cnt = 0; // will be used to tell me if we've inserted the k things in the vector already
     //iterating over the dna sequences
     for (auto p_dna_seq = dna_strings.begin(); p_dna_seq != dna_strings.end(); ++p_dna_seq) {
-        if (cnt <= k) { //if we haven't gotten k values yet
-            int dist_val = leven_distance(query, *p_dna_seq);
+        //distance of query and dna_seq
+        int dist_val = leven_distance(query, *p_dna_seq);
+
+        std:cout << "checked dna_dist #" << cnt << ": " << dist_val << "\n";
+        if (dist_dna_map.size() <= k-1) { //if we haven't gotten k values yt
+            cout << "cnt in here: " << cnt <<  "\n";
             //we can just keep inserting the keys
             dist_dna_map.insert({dist_val, *p_dna_seq});
             min_val =  dist_dna_map.begin()->first;
+            cnt += 1;
+            cout << "map size before deletions: " <<dist_dna_map.size() << "\n";
+
             continue;
         }
-        //else
-        int dist_val = leven_distance(query, *p_dna_seq);
+        cout << "current map size: " <<dist_dna_map.size() << "\n";
         if(dist_val > min_val){ //found an element that belongs in the top k
             dist_dna_map.erase(min_val);
             dist_dna_map.insert({dist_val, *p_dna_seq});
@@ -127,10 +138,13 @@ static vector<string> brute_topk(int k, std::string query, vector<string> dna_st
         cnt += 1;
     }
 
-
+    int cnt2 = 0;
     //get put all the dna strings in the map as a vector
+    cout<< "map_size: " << dist_dna_map.size() << "\n";
     for(auto it = dist_dna_map.begin(); it != dist_dna_map.end(); ++it) {
         topk_vec.push_back(it->second);
+        std::cout << cnt2 << ": " << it->second << " dist: " << it->first << "\n";
+        cnt2 += 1;
     }
 
     return (topk_vec);
