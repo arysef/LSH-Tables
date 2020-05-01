@@ -101,13 +101,16 @@ int main() {
 *   dna_strings is a vector of strings that we will compare to the query
 *
 * Effect:
-*   Finds the top k similar dna strings to the query
+*   Finds the top k similar dna strings to the query. 
+*   if multiple dna sequences have the same distance from the query, we only take one of them. Need to ammend this tomorrow.
 *   Returns of vector of those topk dna sequences
 */
 static vector<string> brute_topk(int k, std::string query, vector<string> dna_strings) 
 {
     //creating a mapping to keep track of the distances between each dna string and the query
     //also the keys of the mapping are ordered so the items are automatically sorted in ascending order 
+
+    //TODO: Change up the code such that dna sequences that belong in the top k but aren't there right now because the map doesn't allow duplicate keys, are still included.
     map<int, string> dist_dna_map;
     vector<string> topk_vec;
     int min_val;
