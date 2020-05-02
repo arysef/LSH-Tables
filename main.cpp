@@ -66,7 +66,7 @@ int main() {
     while (kseq_read(seq) >= 0) {
         std::string str_seq = std::string(seq->seq.s);
 
-        if (count < 10) {
+        if (count < 20) {
         dna_arr.push_back(str_seq);
         }
 
@@ -94,17 +94,17 @@ int main() {
         count += 1;
     }
     //printf("%d\t%d\t%d\n", n, slen, qlen);
-    brute_topk(3, seq1, dna_arr);
+    brute_topk(5, seq1, dna_arr);
     kseq_destroy(seq);
     fclose(fp);
     return 0;
     
 }
 
-//comparison operator that will put the bigger things first
+//comparison operator that will put the smaller things first
 bool compareByDist(const comparison_info  &a, const comparison_info &b)
 {
-    return a.dist_from_query > b.dist_from_query;
+    return a.dist_from_query < b.dist_from_query;
 }
 /*
 * Requires:
@@ -127,16 +127,17 @@ static vector<string> brute_topk(int k, std::string query, vector<string> dna_st
     int cnt = 0; // will be used to tell me if we've inserted the k things in the vector already
     //iterating over the dna sequences
     for (auto p_dna_seq = dna_strings.begin(); p_dna_seq != dna_strings.end(); ++p_dna_seq) {
-       
+        int dist_val = leven_distance(query, *p_dna_seq);
+        cout << "sequence " << cnt << *p_dna_seq << "and length: " << dist_val << "\n";
+        if (query.compare(*p_dna_seq) != 0) { //if the strings aren't equal
         //new struct
         auto dna_struct = new comparison_info; //returns a pointer to a comparison_info struct
         //distance of query and dna_seq
-        int dist_val = leven_distance(query, *p_dna_seq);
-        cout << "sequence " << cnt << *p_dna_seq << "and length: " << dist_val << "\n";
-
+        //int dist_val = leven_distance(query, *p_dna_seq);
         dna_struct->dist_from_query = dist_val;
         dna_struct->dna_sequence = *p_dna_seq;
         dna_info_vec.push_back(*dna_struct);
+       }
     }
     // now sorting the information in place
     std::sort(dna_info_vec.begin(), dna_info_vec.end(), compareByDist);
