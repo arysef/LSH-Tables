@@ -11,6 +11,7 @@
 using namespace std;
 
 KSEQ_INIT(int, read)
+int len = 32;
 
 struct comparison_info
 {
@@ -92,7 +93,7 @@ int main() {
         int len = 32;
         MurmurHash3_x86_32(&str_seq, len, seed, &full_hash);
         //cout << full_hash << "\n";
-        cout << full_hash << " " << min << "\n";
+        cout << count << " " << full_hash << " " << min << "\n";
         count += 1;
     }
     //printf("%d\t%d\t%d\n", n, slen, qlen);
@@ -103,10 +104,27 @@ int main() {
 
 }
 
+/**
+ * Takes a vector of sequences and a num_hashes and outputs num_hashes MinHashes for each sequence. 
+ **/
+
+static vector<uint32_t> getMinHashes(vector<string> sequences, int num_hashes) {
+    vector<uint32_t> placeholder(0);
+    return placeholder;
+}
+
+/**
+ * Requires: 
+ * sequence is string sequence to take MinHash of
+ * seed is seed to be used for hashing
+ * subseq_len is the length of the n-gram used to take MinHash
+ * 
+ * Effect: 
+ * Returns 32bit unsigned int MinHash of sequence
+ **/
 static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subseq_len) {
     uint32_t min = UINT_MAX;
     uint32_t subseq_hash;
-    uint32_t len = 32;
     int a = 3;
     for(int i = 0; i < sequence.length()-subseq_len; i++) {
         string temp = sequence.substr(i, i+subseq_len);
