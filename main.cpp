@@ -6,9 +6,16 @@
 #include "kseq.h"
 #include <string>
 #include <map>
+#include <algorithm>
 using namespace std;
 KSEQ_INIT(int, read)
 
+struct comparison_info
+{
+    /* data */
+    int dist_from_query;
+    string dna_sequence;
+};
 
 static int min3(int x, int y, int z);
 static int leven_distance(std::string str1, std::string str2);
@@ -76,7 +83,7 @@ int main() {
         }
         //Trying to get basic minHash of sequence 
         int min = INT_MAX;
-        int sub_len = 10; // n-gram, so if sublen is 3 we would be MinHashing based on trigram
+        int sub_len = 5; // n-gram, so if sublen is 3 we would be MinHashing based on trigram
         for(int i = 0; i < str_seq.length()-sub_len; i=i+sub_len) {
             unsigned int cur = std::hash<std::string>{}(str_seq.substr(i, i+sub_len));
             if (cur < min)
@@ -87,13 +94,18 @@ int main() {
         count += 1;
     }
     //printf("%d\t%d\t%d\n", n, slen, qlen);
-    brute_topk(7, seq0, dna_arr);
+    brute_topk(3, seq1, dna_arr);
     kseq_destroy(seq);
     fclose(fp);
     return 0;
     
 }
 
+//comparison operator that will put the bigger things first
+bool compareByDist(const comparison_info  &a, const comparison_info &b)
+{
+    return a.dist_from_query > b.dist_from_query;
+}
 /*
 * Requires:
 *   k is the number of strings to return
@@ -107,46 +119,34 @@ int main() {
 */
 static vector<string> brute_topk(int k, std::string query, vector<string> dna_strings) 
 {
-    //creating a mapping to keep track of the distances between each dna string and the query
-    //also the keys of the mapping are ordered so the items are automatically sorted in ascending order 
+    //okay I'm going to change this all up and create a bunch of structs with the dna string information along with the distance information
+    //I'll put the distance and dna info in a struct, and put them all in a vector. Then I'll sort the vector by the distance from the query and take the first k elements 
 
-    //TODO: Change up the code such that dna sequences that belong in the top k but aren't there right now because the map doesn't allow duplicate keys, are still included.
-    map<int, string> dist_dna_map;
-    vector<string> topk_vec;
-    int min_val;
+
+    vector<comparison_info> dna_info_vec;
     int cnt = 0; // will be used to tell me if we've inserted the k things in the vector already
     //iterating over the dna sequences
     for (auto p_dna_seq = dna_strings.begin(); p_dna_seq != dna_strings.end(); ++p_dna_seq) {
+       
+        //new struct
+        auto dna_struct = new comparison_info; //returns a pointer to a comparison_info struct
         //distance of query and dna_seq
         int dist_val = leven_distance(query, *p_dna_seq);
+        cout << "sequence " << cnt << *p_dna_seq << "and length: " << dist_val << "\n";
 
-        std:cout << "checked dna_dist #" << cnt << ": " << dist_val << "\n";
-        if (dist_dna_map.size() <= k-1) { //if we haven't gotten k values yt
-            cout << "cnt in here: " << cnt <<  "\n";
-            //we can just keep inserting the keys
-            dist_dna_map.insert({dist_val, *p_dna_seq});
-            min_val =  dist_dna_map.begin()->first;
-            cnt += 1;
-            cout << "map size before deletions: " <<dist_dna_map.size() << "\n";
-
-            continue;
-        }
-        cout << "current map size: " <<dist_dna_map.size() << "\n";
-        if(dist_val > min_val){ //found an element that belongs in the top k
-            dist_dna_map.erase(min_val);
-            dist_dna_map.insert({dist_val, *p_dna_seq});
-            min_val =  dist_dna_map.begin()->first;
-        }
-        //if the value doesn't belong in the top k, just keep iterating
-        cnt += 1;
+        dna_struct->dist_from_query = dist_val;
+        dna_struct->dna_sequence = *p_dna_seq;
+        dna_info_vec.push_back(*dna_struct);
     }
+    // now sorting the information in place
+    std::sort(dna_info_vec.begin(), dna_info_vec.end(), compareByDist);
 
+    vector<string>topk_vec;
     int cnt2 = 0;
-    //get put all the dna strings in the map as a vector
-    cout<< "map_size: " << dist_dna_map.size() << "\n";
-    for(auto it = dist_dna_map.begin(); it != dist_dna_map.end(); ++it) {
-        topk_vec.push_back(it->second);
-        std::cout << cnt2 << ": " << it->second << " dist: " << it->first << "\n";
+    //putting only the top k dna sequences 
+    for(auto it = dna_info_vec.begin(); cnt2 < k; ++it) {
+        topk_vec.push_back(it->dna_sequence);
+        std::cout << cnt2 << ": " << it->dna_sequence << " dist: " << it->dist_from_query << "\n";
         cnt2 += 1;
     }
 
