@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include "MurMurHash3.h"
 using namespace std;
 
 KSEQ_INIT(int, read)
@@ -22,11 +23,12 @@ static int min3(int x, int y, int z);
 static int leven_distance(std::string str1, std::string str2);
 //uhh before I do this, I need to figure out how to store a sequence of strings
 static vector<string> brute_topk(int k, std::string query, vector<string> dna_strings);
+static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subseq_len);
 int main() {
 
     LSH *lsh = new LSH();
 
-
+    int seed = 1998;
     unsigned int i[] = {1, 1, 1, 2, 2, 2, 3, 3, 3};
 
     unsigned int h[] = {0, 1, 2, 3, 0, 1, 2, 3, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2,
@@ -65,7 +67,7 @@ int main() {
     vector<std::string> dna_arr;
     // Reads FASTQ file sequence by sequence
     while (kseq_read(seq) >= 0) {
-        std::string str_seq = std::string(seq->seq.s);
+        string str_seq = string(seq->seq.s);
 
         if (count < 20) {
         dna_arr.push_back(str_seq);
@@ -83,15 +85,14 @@ int main() {
             //std::cout << "dna_seq distance: " <<leven_distance(seq0, seq1) << "\n";
         }
         //Trying to get basic minHash of sequence 
-        int min = INT_MAX;
-        int sub_len = 5; // n-gram, so if sublen is 3 we would be MinHashing based on trigram
-        for(int i = 0; i < str_seq.length()-sub_len; i=i+sub_len) {
-            unsigned int cur = std::hash<std::string>{}(str_seq.substr(i, i+sub_len));
-            if (cur < min)
-                min = cur;
-        }
         //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
         //std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
+        uint32_t min = getSequenceMinHash(str_seq, seed, 10);
+        uint32_t full_hash;
+        int len = 32;
+        MurmurHash3_x86_32(&str_seq, len, seed, &full_hash);
+        //cout << full_hash << "\n";
+        cout << full_hash << " " << min << "\n";
         count += 1;
     }
     //printf("%d\t%d\t%d\n", n, slen, qlen);
@@ -99,8 +100,24 @@ int main() {
     kseq_destroy(seq);
     fclose(fp);
     return 0;
-    
+
 }
+
+static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subseq_len) {
+    uint32_t min = UINT_MAX;
+    uint32_t subseq_hash;
+    uint32_t len = 32;
+    int a = 3;
+    for(int i = 0; i < sequence.length()-subseq_len; i++) {
+        string temp = sequence.substr(i, i+subseq_len);
+        uint32_t cur;
+        MurmurHash3_x86_32(&temp, len, seed, &cur);
+        if (cur < min)
+            min = cur;
+    }
+    return min;
+
+} 
 
 //comparison operator that will put the smaller things first
 bool compareByDist(const comparison_info  &a, const comparison_info &b)
