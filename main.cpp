@@ -56,13 +56,8 @@ int main() {
             if (cur < min)
                 min = cur;
         }
-<<<<<<< HEAD
-        //std::cout << "\n Above is put together \n" << str_seq << "\n";
-        //std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
-=======
         //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
         std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
->>>>>>> 991c3c9fb2aa32316a469ee56c40a147dc242988
     }
     printf("%d\t%d\t%d\n", n, slen, qlen);
     kseq_destroy(seq);
