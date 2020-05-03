@@ -105,12 +105,21 @@ int main() {
 }
 
 /**
- * Takes a vector of sequences and a num_hashes and outputs num_hashes MinHashes for each sequence. 
+ * Requires: 
+ * vector with sequences in it
+ * integer which represents number of hashes per sequence 
+ * integer which is the length of ngram used for the MinHashes
+ * Effect: 
+ * returns vector with num_hashes MinHashes for each sequence that was input in sequences 
+ * this vector will have length of len(sequences)*num_hashes   
  **/
-
-static vector<uint32_t> getMinHashes(vector<string> sequences, int num_hashes) {
-    vector<uint32_t> placeholder(0);
-    return placeholder;
+static vector<uint32_t> getMinHashes(vector<string> sequences, int num_hashes, int ngram_len) {
+    vector<uint32_t> myHashes;
+    for (string seq: sequences)  {
+        for (int i = 0; i < num_hashes; i++)
+            myHashes.push_back(getSequenceMinHash(seq, i, ngram_len));
+    }
+    return myHashes;
 }
 
 /**
