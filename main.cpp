@@ -62,13 +62,18 @@ int main() {
     int count = 0;
     std::string seq0;
     std::string seq1;
+    uint32_t idx = 0;
+    map<uint32_t, string> idx_to_string_map;
     
-    //I can use a vector to dynamically allocate space for an array
-    // will store all the dna strings 
+    //vector to store all the dna sequences to be processed 
     vector<std::string> dna_arr;
     // Reads FASTQ file sequence by sequence
     while (kseq_read(seq) >= 0) {
         string str_seq = string(seq->seq.s);
+
+        //mapping an index to the read string and updating the index
+        idx_to_string_map.insert({idx, str_seq});
+        idx += 1;
 
         if (count < 20) {
         dna_arr.push_back(str_seq);
@@ -93,9 +98,12 @@ int main() {
         int len = 32;
         MurmurHash3_x86_32(&str_seq, len, seed, &full_hash);
         //cout << full_hash << "\n";
-        cout << count << " " << full_hash << " " << min << "\n";
+       // cout << count << " " << full_hash << " " << min << "\n";
         count += 1;
     }
+
+
+
     //printf("%d\t%d\t%d\n", n, slen, qlen);
     brute_topk(5, seq1, dna_arr);
     kseq_destroy(seq);
@@ -122,7 +130,7 @@ static vector<uint32_t> getMinHashes(vector<string> sequences, int num_hashes, i
     return myHashes;
 }
 
-/**
+/*
  * Requires: 
  * sequence is string sequence to take MinHash of
  * seed is seed to be used for hashing
@@ -164,16 +172,13 @@ bool compareByDist(const comparison_info  &a, const comparison_info &b)
 */
 static vector<string> brute_topk(int k, std::string query, vector<string> dna_strings) 
 {
-    //okay I'm going to change this all up and create a bunch of structs with the dna string information along with the distance information
-    //I'll put the distance and dna info in a struct, and put them all in a vector. Then I'll sort the vector by the distance from the query and take the first k elements 
-
 
     vector<comparison_info> dna_info_vec;
     int cnt = 0; // will be used to tell me if we've inserted the k things in the vector already
     //iterating over the dna sequences
     for (auto p_dna_seq = dna_strings.begin(); p_dna_seq != dna_strings.end(); ++p_dna_seq) {
         int dist_val = leven_distance(query, *p_dna_seq);
-        cout << "sequence " << cnt << *p_dna_seq << "and length: " << dist_val << "\n";
+        //cout << "sequence " << cnt << *p_dna_seq << "and length: " << dist_val << "\n";
         if (query.compare(*p_dna_seq) != 0) { //if the strings aren't equal
         //new struct
         auto dna_struct = new comparison_info; //returns a pointer to a comparison_info struct
@@ -192,7 +197,7 @@ static vector<string> brute_topk(int k, std::string query, vector<string> dna_st
     //putting only the top k dna sequences 
     for(auto it = dna_info_vec.begin(); cnt2 < k; ++it) {
         topk_vec.push_back(it->dna_sequence);
-        std::cout << cnt2 << ": " << it->dna_sequence << " dist: " << it->dist_from_query << "\n";
+        //std::cout << cnt2 << ": " << it->dna_sequence << " dist: " << it->dist_from_query << "\n";
         cnt2 += 1;
     }
 
