@@ -78,10 +78,10 @@ int main() {
         //mapping an index to the read string and updating the index
         idx_to_string_map.insert({idx, str_seq});
         idx += 1;
-        if (count < 20)
+        if (count < 20) {
             //Hashing the dna sequence and inserting the corresponding index into the lsh table.
             insert_into_lsh(str_seq, idx, NUMHASH, lsh2);
-
+        }
         //Trying to get basic minHash of sequence 
         //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
         //std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
@@ -93,8 +93,8 @@ int main() {
        // cout << count << " " << full_hash << " " << min << "\n";
        count += 1;
     }
-
-
+    //viewing the lsh table to see if things were inserted properly
+    lsh2->view();
 
     //printf("%d\t%d\t%d\n", n, slen, qlen);
     brute_topk(5, seq1, dna_arr);
