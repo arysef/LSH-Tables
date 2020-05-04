@@ -25,6 +25,8 @@ static int leven_distance(std::string str1, std::string str2);
 //uhh before I do this, I need to figure out how to store a sequence of strings
 static vector<string> brute_topk(int k, std::string query, vector<string> dna_strings);
 static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subseq_len);
+static void insert_into_lsh(string dna_sequence, uint32_t string_idx, LSH *lsh_table);
+
 int main() {
 
     LSH *lsh = new LSH();
@@ -52,8 +54,6 @@ int main() {
     
     int test_edit;
 
-    //test_edit = leven_distance("oluwapelumi","back");
-    //printf("should say 10: %d \n", test_edit); 
     FILE* fp;
     kseq_t *seq;
     int n = 0, slen = 0, qlen = 0;
@@ -74,6 +74,9 @@ int main() {
         //mapping an index to the read string and updating the index
         idx_to_string_map.insert({idx, str_seq});
         idx += 1;
+        //TODO: A function here that does all the preprocessing(hashing the string) and inserting the corresponding index.
+
+
 
         if (count < 20) {
         dna_arr.push_back(str_seq);
@@ -85,11 +88,8 @@ int main() {
         } 
         if (count == 1) {
             seq1 = str_seq;
-            //doing the data comparison
-            //printf("seq0: %s\n", seq0.c_str());
-            //printf("seq1: %s\n", seq1.c_str());
-            //std::cout << "dna_seq distance: " <<leven_distance(seq0, seq1) << "\n";
         }
+
         //Trying to get basic minHash of sequence 
         //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
         //std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
@@ -112,11 +112,29 @@ int main() {
 
 }
 
-/**
+/*
+ * Requires: 
+ * dna_sequence is a dna sequence in string form
+ * string_idx is the corresponding integer index of the string
+ * lsh_table is the lsh data structure where we'll be inserting the string
+ * 
+ * Effect: 
+ * Gets the hashes of the string and inserts the index of the string with the corresponding hashes into the lsh table   
+ **/
+static void insert_into_lsh(string dna_sequence, uint32_t string_idx, LSH *lsh_table) {
+
+    //get the hashes of the string
+    
+    // insert the index with the hashes into the lsh table 
+    
+}
+
+/*
  * Requires: 
  * vector with sequences in it
- * integer which represents number of hashes per sequence 
+ * integer which represents number of hashes per sequence ( the total amount needed to be hashed into the L tables)
  * integer which is the length of ngram used for the MinHashes
+ * 
  * Effect: 
  * returns vector with num_hashes MinHashes for each sequence that was input in sequences 
  * this vector will have length of len(sequences)*num_hashes   
@@ -132,7 +150,7 @@ static vector<uint32_t> getMinHashes(vector<string> sequences, int num_hashes, i
 
 /*
  * Requires: 
- * sequence is string sequence to take MinHash of
+ * sequence is string dna sequence to take MinHash of
  * seed is seed to be used for hashing
  * subseq_len is the length of the n-gram used to take MinHash
  * 
@@ -159,6 +177,7 @@ bool compareByDist(const comparison_info  &a, const comparison_info &b)
 {
     return a.dist_from_query < b.dist_from_query;
 }
+
 /*
 * Requires:
 *   k is the number of strings to return
@@ -204,6 +223,7 @@ static vector<string> brute_topk(int k, std::string query, vector<string> dna_st
     return (topk_vec);
 }
 
+//Find the minimum value of 3 integers
 int 
 min3(int x, int y, int z) 
 { 
