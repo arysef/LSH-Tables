@@ -78,10 +78,10 @@ int main() {
         //mapping an index to the read string and updating the index
         idx_to_string_map.insert({idx, str_seq});
         idx += 1;
-        if (count < 20) {
-            //Hashing the dna sequence and inserting the corresponding index into the lsh table.
-            insert_into_lsh(str_seq, idx, NUMHASH, lsh2);
-        }
+        // if (count < 20) {
+        //     //Hashing the dna sequence and inserting the corresponding index into the lsh table.
+        //     // insert_into_lsh(str_seq, idx, NUMHASH, lsh2);
+        // }
         //Trying to get basic minHash of sequence 
         //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
         //std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
@@ -114,14 +114,14 @@ int main() {
  * Gets the hashes of the string and inserts the index of the string with the corresponding hashes into the lsh table   
  **/
 static void insert_into_lsh(string dna_sequence, uint32_t string_idx, int numHashes, LSH *lsh_table) {
-    unsigned int *sequence_hashes;
+   unsigned int *sequence_hashes;
 
     //get the hashes of the string
         //Thinking I want to use insert where we insert one string at a time. I feel like we can control the code there more
         //and it'll be less prone to errors
     sequence_hashes = getDNAMinhashes(dna_sequence, numHashes);
     // insert the index with the hashes into the lsh table 
-    lsh_table->insert((unsigned int)string_idx, sequence_hashes);
+    lsh_table->insert((unsigned int)string_idx, getDNAMinhashes(dna_sequence, numHashes));
 }
 
 /*
@@ -135,10 +135,13 @@ static void insert_into_lsh(string dna_sequence, uint32_t string_idx, int numHas
  * this vector will have length of len(num_hashes)   
  **/
 static unsigned int *getDNAMinhashes(string dna_sequence, int numHashes) {
-    unsigned int dnaHashes[numHashes];
-    for (int i = 0; i < numHashes; i++)
-        dnaHashes[i] = getSequenceMinHash(dna_sequence, i, NGRAM_LEN);
-    return dnaHashes;
+    unsigned int dHashes[NUMHASH];
+    //dHashes = (unsigned int *)malloc(sizeof(int)*NUMHASH);
+    //auto dHashes = (unsigned int *)dHashes;
+    //unsigned int dnaHashes[numHashes];
+    for (int i = 0; i < NUMHASH; i++)
+        dHashes[i] = getSequenceMinHash(dna_sequence, i, NGRAM_LEN);
+    return  dHashes;
 }
 
 /*
