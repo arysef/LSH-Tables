@@ -26,6 +26,7 @@ static int leven_distance(std::string str1, std::string str2);
 static vector<string> brute_topk(int k, std::string query, vector<string> dna_strings);
 static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subseq_len);
 static void insert_into_lsh(string dna_sequence, uint32_t string_idx, LSH *lsh_table);
+static vector<uint32_t> getVectorMinhashes(string dna_sequence, uint32_t seed, int numHashes);
 
 int main() {
 
@@ -64,7 +65,9 @@ int main() {
     std::string seq1;
     uint32_t idx = 0;
     map<uint32_t, string> idx_to_string_map;
-    
+   
+    //Intializing LSH table
+    LSH *lsh2 = new LSH();
     //vector to store all the dna sequences to be processed 
     vector<std::string> dna_arr;
     // Reads FASTQ file sequence by sequence
@@ -74,21 +77,8 @@ int main() {
         //mapping an index to the read string and updating the index
         idx_to_string_map.insert({idx, str_seq});
         idx += 1;
-        //TODO: A function here that does all the preprocessing(hashing the string) and inserting the corresponding index.
-
-
-
-        if (count < 20) {
-        dna_arr.push_back(str_seq);
-        }
-
-        //if statements to use to check that the distance metric works for the actual dna data
-        if (count == 0) {
-            seq0 = str_seq;
-        } 
-        if (count == 1) {
-            seq1 = str_seq;
-        }
+        //Hashing the dna sequence and inserting the corresponding index into the lsh table.
+        insert_into_lsh(str_seq, idx, NUMHASH, lsh2);
 
         //Trying to get basic minHash of sequence 
         //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
@@ -121,12 +111,32 @@ int main() {
  * Effect: 
  * Gets the hashes of the string and inserts the index of the string with the corresponding hashes into the lsh table   
  **/
-static void insert_into_lsh(string dna_sequence, uint32_t string_idx, LSH *lsh_table) {
+static void insert_into_lsh(string dna_sequence, uint32_t string_idx, int numHashes, LSH *lsh_table) {
+    unsigned int *sequence_hashes;
 
     //get the hashes of the string
-    
+        //Thinking I want to use insert where we insert one string at a time. I feel like we can control the code there more
+        //and it'll be less prone to errors
+    sequence_hashes = getDNAMinhashes(dna_sequence, numHashes);
     // insert the index with the hashes into the lsh table 
-    
+    lsh_table->insert((unsigned int)string_idx, sequence_hashes);
+}
+
+/*
+ * Requires: 
+ * dna sequence to be hashed
+ * number of times to hash the string
+ * integer which is the length of ngram used for the MinHashes
+ * 
+ * Effect: 
+ * returns vector with num_hashes MinHashes for the sequence
+ * this vector will have length of len(num_hashes)   
+ **/
+static unsigned int *getDNAMinhashes(string dna_sequence, int numHashes) {
+    unsigned int dnaHashes[numHashes];
+    for (int i = 0; i < numHashes; i++)
+        dnaHashes[i] = getSequenceMinHash(dna_sequence, i, NGRAM_LEN);
+    return dnaHashes;
 }
 
 /*
@@ -139,11 +149,12 @@ static void insert_into_lsh(string dna_sequence, uint32_t string_idx, LSH *lsh_t
  * returns vector with num_hashes MinHashes for each sequence that was input in sequences 
  * this vector will have length of len(sequences)*num_hashes   
  **/
-static vector<uint32_t> getMinHashes(vector<string> sequences, int num_hashes, int ngram_len) {
+static vector<uint32_t> getMinHashes(vector<string> sequences, int num_hashes) {
+    //Thinking we should change this name to be more descriptive
     vector<uint32_t> myHashes;
     for (string seq: sequences)  {
         for (int i = 0; i < num_hashes; i++)
-            myHashes.push_back(getSequenceMinHash(seq, i, ngram_len));
+            myHashes.push_back(getSequenceMinHash(seq, i, NGRAM_LEN));
     }
     return myHashes;
 }
@@ -169,8 +180,9 @@ static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subs
             min = cur;
     }
     return min;
-
 } 
+
+
 
 //comparison operator that will put the smaller things first
 bool compareByDist(const comparison_info  &a, const comparison_info &b)
