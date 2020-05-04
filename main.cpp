@@ -25,7 +25,8 @@ static int leven_distance(std::string str1, std::string str2);
 //uhh before I do this, I need to figure out how to store a sequence of strings
 static vector<string> brute_topk(int k, std::string query, vector<string> dna_strings);
 static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subseq_len);
-static void insert_into_lsh(string dna_sequence, uint32_t string_idx, LSH *lsh_table);
+static unsigned int *getDNAMinhashes(string dna_sequence, int numHashes);
+static void insert_into_lsh(string dna_sequence, uint32_t string_idx, int numHashes, LSH *lsh_table);
 static vector<uint32_t> getVectorMinhashes(string dna_sequence, uint32_t seed, int numHashes);
 
 int main() {
@@ -77,8 +78,9 @@ int main() {
         //mapping an index to the read string and updating the index
         idx_to_string_map.insert({idx, str_seq});
         idx += 1;
-        //Hashing the dna sequence and inserting the corresponding index into the lsh table.
-        insert_into_lsh(str_seq, idx, NUMHASH, lsh2);
+        if (count < 20)
+            //Hashing the dna sequence and inserting the corresponding index into the lsh table.
+            insert_into_lsh(str_seq, idx, NUMHASH, lsh2);
 
         //Trying to get basic minHash of sequence 
         //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
@@ -89,7 +91,7 @@ int main() {
         MurmurHash3_x86_32(&str_seq, len, seed, &full_hash);
         //cout << full_hash << "\n";
        // cout << count << " " << full_hash << " " << min << "\n";
-        count += 1;
+       count += 1;
     }
 
 
