@@ -199,11 +199,10 @@ static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subs
         string temp = sequence.substr(i, i+subseq_len);
         uint32_t cur;
         MurmurHash3_x86_32(&temp, len, seed, &cur);
-        uint32_t small = cur % 10000; 
-        if (small < min)
-            min = small;
+        if (cur < min)
+            min = cur;
     }
-    return min;
+    return min % (1 << RANGE_POW);
 } 
 
 
