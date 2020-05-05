@@ -8,7 +8,6 @@
 #include <map>
 #include <algorithm>
 #include "MurMurHash3.h"
-#include "config.h"
 using namespace std;
 
 KSEQ_INIT(int, read)
@@ -26,7 +25,7 @@ static int leven_distance(std::string str1, std::string str2);
 //uhh before I do this, I need to figure out how to store a sequence of strings
 static vector<string> brute_topk(int k, std::string query, vector<string> dna_strings);
 static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subseq_len);
-static unsigned int *getDNAMinhashes(string dna_sequence, int numHashes, unsigned int * dHashes);
+static unsigned int *getDNAMinhashes(string dna_sequence, int numHashes);
 static void insert_into_lsh(string dna_sequence, uint32_t string_idx, int numHashes, LSH *lsh_table);
 static vector<uint32_t> getVectorMinhashes(string dna_sequence, uint32_t seed, int numHashes);
 
@@ -73,17 +72,16 @@ int main() {
     //vector to store all the dna sequences to be processed 
     vector<std::string> dna_arr;
     // Reads FASTQ file sequence by sequence
-    
-    while (kseq_read(seq) >= 0 && (count < 100)) {
+    while (kseq_read(seq) >= 0) {
         string str_seq = string(seq->seq.s);
 
         //mapping an index to the read string and updating the index
         idx_to_string_map.insert({idx, str_seq});
         idx += 1;
-        // if (count < 20) {
-        //     //Hashing the dna sequence and inserting the corresponding index into the lsh table.
-        //     // insert_into_lsh(str_seq, idx, NUMHASH, lsh2);
-        // }
+        if (count < 20) {
+            //Hashing the dna sequence and inserting the corresponding index into the lsh table.
+            insert_into_lsh(str_seq, idx, NUMHASH, lsh2);
+        }
         //Trying to get basic minHash of sequence 
         //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
         //std::cout << std::hash<std::string>{}(str_seq) << " " << min << "\n";
@@ -92,20 +90,14 @@ int main() {
         int len = 32;
         MurmurHash3_x86_32(&str_seq, len, seed, &full_hash);
         //cout << full_hash << "\n";
-        cout << count << " " << full_hash << " " << min << "\n";
-        insert_into_lsh(str_seq, count, 2, lsh2);
-        //unsigned int h2[] = {1, 2, 4};
-        //lsh2->insert(1, h2);
-        count += 1;
+       // cout << count << " " << full_hash << " " << min << "\n";
+       count += 1;
     }
-    //lsh2->view();
-    //unsigned int h2[] = {1, 2, 4};
-    //lsh2->insert(0, h2);
     //viewing the lsh table to see if things were inserted properly
-    //lsh2->view();
+    lsh2->view();
 
     //printf("%d\t%d\t%d\n", n, slen, qlen);
-    //brute_topk(5, seq1, dna_arr);
+    brute_topk(5, seq1, dna_arr);
     kseq_destroy(seq);
     fclose(fp);
     return 0;
@@ -122,26 +114,14 @@ int main() {
  * Gets the hashes of the string and inserts the index of the string with the corresponding hashes into the lsh table   
  **/
 static void insert_into_lsh(string dna_sequence, uint32_t string_idx, int numHashes, LSH *lsh_table) {
-   unsigned int sequence_hashes[numHashes];
+  // unsigned int *sequence_hashes;
 
     //get the hashes of the string
         //Thinking I want to use insert where we insert one string at a time. I feel like we can control the code there more
         //and it'll be less prone to errors
-    getDNAMinhashes(dna_sequence, numHashes, sequence_hashes);
+   // sequence_hashes = getDNAMinhashes(dna_sequence, numHashes);
     // insert the index with the hashes into the lsh table 
-    /*
-    //unsigned int h2[] = {1, 2, 4};
-    //unsigned int *result = getDNAMinhashes(dna_sequence, numHashes);
-    //unsigned int result_array[2];
-    
-    for(int i = 0; i < 2; i++) {
-        result_array[i] = *(result + i);
-        cout << *(result + i) << "\n"; 
-    }
-    */
-    //cout << "GET DNA MINHASHES CALLED HERE" << result_array[0] <<"\n";
-    lsh_table->insert((unsigned int)string_idx, sequence_hashes);
-    //lsh_table->insert((unsigned int)string_idx, h2);
+    lsh_table->insert((unsigned int)string_idx, getDNAMinhashes(dna_sequence, numHashes));
 }
 
 /*
@@ -154,11 +134,12 @@ static void insert_into_lsh(string dna_sequence, uint32_t string_idx, int numHas
  * returns vector with num_hashes MinHashes for the sequence
  * this vector will have length of len(num_hashes)   
  **/
-static unsigned int *getDNAMinhashes(string dna_sequence, int numHashes, unsigned int * dHashes) {
+static unsigned int *getDNAMinhashes(string dna_sequence, int numHashes) {
+    unsigned int dHashes[NUMHASH];
     //dHashes = (unsigned int *)malloc(sizeof(int)*NUMHASH);
     //auto dHashes = (unsigned int *)dHashes;
     //unsigned int dnaHashes[numHashes];
-    for (int i = 0; i < numHashes; i++)
+    for (int i = 0; i < NUMHASH; i++)
         dHashes[i] = getSequenceMinHash(dna_sequence, i, NGRAM_LEN);
     return  dHashes;
 }
@@ -195,19 +176,17 @@ static vector<uint32_t> getMinHashes(vector<string> sequences, int num_hashes) {
 static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subseq_len) {
     uint32_t min = UINT_MAX;
     uint32_t subseq_hash;
+    int a = 3;
     for(int i = 0; i < sequence.length()-subseq_len; i++) {
         string temp = sequence.substr(i, i+subseq_len);
         uint32_t cur;
         MurmurHash3_x86_32(&temp, len, seed, &cur);
-        uint32_t small = cur % 10000; 
-        if (small < min)
-            min = small;
+        if (cur < min)
+            min = cur;
     }
     return min;
-} 
 
-
-
+}
 //comparison operator that will put the smaller things first
 bool compareByDist(const comparison_info  &a, const comparison_info &b)
 {
@@ -268,7 +247,7 @@ min3(int x, int y, int z)
 
 /*
 * Requires:
-*   str1 and str2 are both genomic sequences represented as strings
+*   str1 and str2 are both genomic sequences represe nted as strings
 *   m is the index of the character we're looking at in str1
 *   n is the index of the character we're looking at in str2
 *
