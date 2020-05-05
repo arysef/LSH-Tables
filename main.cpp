@@ -63,20 +63,29 @@ int main() {
     seq = kseq_init(fileno(fp));
     int count = 0;
     std::string seq0;
-    std::string seq1;
     uint32_t idx = 0;
     map<uint32_t, string> idx_to_string_map;
    
     //Intializing LSH table
-    LSH *lsh2 = new LSH();
+    //LSH *lsh2 = new LSH();
+    cout << "Done allocating memory for LSH table" << "\n";
     //vector to store all the dna sequences to be processed 
     vector<std::string> dna_arr;
+    unsigned int seq0_hashes[2];
+    unsigned int seq0_top10[10];
     // Reads FASTQ file sequence by sequence
     while (kseq_read(seq) >= 0) {
         string str_seq = string(seq->seq.s);
-
+        if (count == 0) {
+            char buffer[str_seq.length()];
+            seq0 = str_seq.copy(buffer, str_seq.length(), 0);
+            cout << seq0 << "\n";
+            cout << str_seq << "\n";
+            seq0_hashes[0] = getSequenceMinHash(str_seq, 0, 20);
+            seq0_hashes[1] = getSequenceMinHash(str_seq, 1, 20);
+        }
         //mapping an index to the read string and updating the index
-        idx_to_string_map.insert({idx, str_seq});
+        //idx_to_string_map.insert({idx, str_seq});
         idx += 1;
         if (count < 20) {
             //Hashing the dna sequence and inserting the corresponding index into the lsh table.
@@ -90,14 +99,24 @@ int main() {
         int len = 32;
         MurmurHash3_x86_32(&str_seq, len, seed, &full_hash);
         //cout << full_hash << "\n";
-       // cout << count << " " << full_hash << " " << min << "\n";
-       count += 1;
+        if (count % 10000 == 0)
+            cout << count << " " << full_hash << " " << min << "\n";
+        //insert_into_lsh(str_seq, count, 2, lsh2);
+        //unsigned int h2[] = {1, 2, 4};
+        //lsh2->insert(1, h2);
+        count += 1;
     }
     //viewing the lsh table to see if things were inserted properly
-    lsh2->view();
+    //lsh2->top_k(0, 10, seq0_hashes, seq0_top10);
 
+    for (int i = 0; i < 10; i++) {
+        cout << seq0_top10[i] << "\n";
+    }
     //printf("%d\t%d\t%d\n", n, slen, qlen);
-    brute_topk(5, seq1, dna_arr);
+    vector<string> brute_5 = brute_topk(5, seq0, dna_arr);
+    for (int i = 0; i < 5; i++) {
+        cout << brute_5.at(i) << "\n";
+    }
     kseq_destroy(seq);
     fclose(fp);
     return 0;
