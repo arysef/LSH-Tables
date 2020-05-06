@@ -96,10 +96,6 @@ int main() {
         //mapping an index to the read string and updating the index
         idx_to_string_map.insert({idx, str_seq});
         idx += 1;
-        if (count < 20) {
-            //Hashing the dna sequence and inserting the corresponding index into the lsh table.
-            // insert_into_lsh(str_seq, idx, NUMHASH, lsh2);
-        }
         //Trying to get basic minHash of sequence 
         //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
 
@@ -122,19 +118,20 @@ int main() {
         cout << seq_top10[i] << "\n";
     }
     unsigned int idxs[10] =  {308597, 319039, 464183, 394249, 439143, 442117, 18615, 153262, 260764, 82983};
-    
+    cout << "Experiment begins" << "\n";
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     for(int i = 0; i < 10; i++) {
-        int idx = idxs[i];
-        string seq = idx_to_string_map[idxs[idx]];
+        uint32_t idx = idxs[i];
+        cout << "test";
+        string seq = idx_to_string_map[idx];
         seq_hashes[0] = getSequenceMinHash(seq, 0, 6);
         seq_hashes[1] = getSequenceMinHash(seq, 1, 6);
         seq_hashes[2] = getSequenceMinHash(seq, 2, 6);
         seq_hashes[3] = getSequenceMinHash(seq, 3, 6);
         lsh2->top_k(1, 10, seq_hashes, seq_top10);
-        cout << "Top 10 for Index: " << idx << "\n";
+        //cout << "Top 10 for Index: " << idx << "\n";
         for (int j = 0; j < 10; j++) {
-            cout << seq_top10[j] << "\n";
+            //cout << seq_top10[j] << "\n";
         }
     }
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
