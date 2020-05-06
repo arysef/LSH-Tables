@@ -32,30 +32,6 @@ static void insert_into_lsh(string dna_sequence, uint32_t string_idx, int numHas
 static vector<uint32_t> getVectorMinhashes(string dna_sequence, uint32_t seed, int numHashes);
 
 int main() {
-
-    LSH *lsh = new LSH();
-
-    int seed = 1998;
-    unsigned int i[] = {1, 1, 1, 2, 2, 2, 3, 3, 3};
-
-    unsigned int h[] = {0, 1, 2, 3, 0, 1, 2, 3, 3, 2, 1, 0, 3, 2, 1, 0, 3, 2,
-                        1, 0, 1, 3, 2, 2, 1, 2, 3, 3, 3, 3, 2, 1, 1, 1, 2, 3};
-
-    lsh->insert(9, i, h);
-
-    //lsh->view();
-
-    unsigned int q[] = {0, 1, 2, 3, 1, 2, 0, 1};
-
-    unsigned int r[10];
-
-    lsh->top_k(2, 5, q, r);
-
-    
-    // for (int i; i < 10; i++) {
-    //     std::cout << r[i] << "\n";
-    // }
-    
     int test_edit;
 
     FILE* fp;
@@ -76,6 +52,7 @@ int main() {
     unsigned int seq_hashes[4];
     unsigned int seq_top10[10];
     // Reads FASTQ file sequence by sequence
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     while (kseq_read(seq) >= 0) {
         
         string str_seq = string(seq->seq.s);
@@ -83,26 +60,23 @@ int main() {
         idx_to_string_map.insert({idx, str_seq});
         idx += 1;
 
-        //heartbeat for insertion
+        // heartbeat for insertion
         if (count % 10000 == 0){
-            uint32_t min = getSequenceMinHash(str_seq, seed, 10);
+            uint32_t min = getSequenceMinHash(str_seq, 0, 10);
             uint32_t full_hash;
             int len = 32;
-            MurmurHash3_x86_32(&str_seq, len, seed, &full_hash);
+            MurmurHash3_x86_32(&str_seq, len, 0, &full_hash);
             cout << count << " " << full_hash << " " << min << "\n";
         }
         insert_into_lsh(str_seq, count, 4, lsh2);
         count += 1;
     }
-    
-    cout << "Printing before assignment" << "\n";
-    for (int i = 0; i < 10; i++) {
-        cout << seq_top10[i] << "\n";
-    }
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
     // below are the test values that we used 
     unsigned int idxs[10] =  {308597, 319039, 464183, 394249, 439143, 442117, 18615, 153262, 260764, 82983};
     cout << "Experiment begins" << "\n";
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    // Retrieving top 10 for each test value 
     for(int i = 0; i < 10; i++) {
         uint32_t idx = idxs[i];
         cout << "test";
@@ -119,22 +93,8 @@ int main() {
             //cout << seq_top10[j] << "\n";
         }
     }
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    /*
-    lsh2->top_k(1, 10, seq0_hashes, seq_top10);
-    cout << "Printing after assignment" << "\n";
-    for (int i = 0; i < 10; i++) {
-        cout << seq_top10[i] << "\n";
-    }
-    
-    //printf("%d\t%d\t%d\n", n, slen, qlen);
-    vector<string> brute_5 = brute_topk(5, seq0, dna_arr);
-    for (int i = 0; i < 5; i++) {
-        cout << brute_5.at(i) << "\n";
-    }
-    */
-   std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
+   std::cout << "Time to insert = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
 
     kseq_destroy(seq);
     fclose(fp);
@@ -153,25 +113,10 @@ int main() {
  **/
 static void insert_into_lsh(string dna_sequence, uint32_t string_idx, int numHashes, LSH *lsh_table) {
    unsigned int sequence_hashes[numHashes];
-
     //get the hashes of the string
-        //Thinking I want to use insert where we insert one string at a time. I feel like we can control the code there more
-        //and it'll be less prone to errors
     getDNAMinhashes(dna_sequence, numHashes, sequence_hashes);
     // insert the index with the hashes into the lsh table 
-    /*
-    //unsigned int h2[] = {1, 2, 4};
-    //unsigned int *result = getDNAMinhashes(dna_sequence, numHashes);
-    //unsigned int result_array[2];
-    
-    for(int i = 0; i < 2; i++) {
-        result_array[i] = *(result + i);
-        cout << *(result + i) << "\n"; 
-    }
-    */
-    //cout << "GET DNA MINHASHES CALLED HERE" << result_array[0] <<"\n";
     lsh_table->insert((unsigned int)string_idx, sequence_hashes);
-    //lsh_table->insert((unsigned int)string_idx, h2);
 }
 
 /*
@@ -185,9 +130,6 @@ static void insert_into_lsh(string dna_sequence, uint32_t string_idx, int numHas
  * this vector will have length of len(num_hashes)   
  **/
 static unsigned int *getDNAMinhashes(string dna_sequence, int numHashes, unsigned int * dHashes) {
-    //dHashes = (unsigned int *)malloc(sizeof(int)*NUMHASH);
-    //auto dHashes = (unsigned int *)dHashes;
-    //unsigned int dnaHashes[numHashes];
     for (int i = 0; i < numHashes; i++)
         dHashes[i] = getSequenceMinHash(dna_sequence, i, NGRAM_LEN);
     return  dHashes;
@@ -204,13 +146,12 @@ static unsigned int *getDNAMinhashes(string dna_sequence, int numHashes, unsigne
  * this vector will have length of len(sequences)*num_hashes   
  **/
 static vector<uint32_t> getMinHashes(vector<string> sequences, int num_hashes) {
-    //Thinking we should change this name to be more descriptive
-    vector<uint32_t> myHashes;
+    vector<uint32_t> seqMinHashes;
     for (string seq: sequences)  {
         for (int i = 0; i < num_hashes; i++)
-            myHashes.push_back(getSequenceMinHash(seq, i, NGRAM_LEN));
+            seqMinHashes.push_back(getSequenceMinHash(seq, i, NGRAM_LEN));
     }
-    return myHashes;
+    return seqMinHashes;
 }
 
 /*
@@ -225,6 +166,7 @@ static vector<uint32_t> getMinHashes(vector<string> sequences, int num_hashes) {
 static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subseq_len) {
     uint32_t min = UINT_MAX;
     uint32_t subseq_hash;
+    // Iterates through all ngrams in sequence and returns lowest hash value for given seed
     for(int i = 0; i < sequence.length()-subseq_len; i++) {
         string temp = sequence.substr(i, i+subseq_len);
         uint32_t cur;
@@ -237,7 +179,7 @@ static uint32_t getSequenceMinHash(string sequence, uint32_t seed, uint32_t subs
 
 
 
-//comparison operator that will put the smaller things first
+// simple comparison operator that will put the smaller things first
 bool compareByDist(const comparison_info  &a, const comparison_info &b)
 {
     return a.dist_from_query < b.dist_from_query;
@@ -262,12 +204,10 @@ static vector<string> brute_topk(int k, std::string query, vector<string> dna_st
     //iterating over the dna sequences
     for (auto p_dna_seq = dna_strings.begin(); p_dna_seq != dna_strings.end(); ++p_dna_seq) {
         int dist_val = leven_distance(query, *p_dna_seq);
-        //cout << "sequence " << cnt << *p_dna_seq << "and length: " << dist_val << "\n";
         if (query.compare(*p_dna_seq) != 0) { //if the strings aren't equal
         //new struct
         auto dna_struct = new comparison_info; //returns a pointer to a comparison_info struct
         //distance of query and dna_seq
-        //int dist_val = leven_distance(query, *p_dna_seq);
         dna_struct->dist_from_query = dist_val;
         dna_struct->dna_sequence = *p_dna_seq;
         dna_info_vec.push_back(*dna_struct);
@@ -281,7 +221,6 @@ static vector<string> brute_topk(int k, std::string query, vector<string> dna_st
     //putting only the top k dna sequences 
     for(auto it = dna_info_vec.begin(); cnt2 < k; ++it) {
         topk_vec.push_back(it->dna_sequence);
-        //std::cout << cnt2 << ": " << it->dna_sequence << " dist: " << it->dist_from_query << "\n";
         cnt2 += 1;
     }
 
@@ -313,10 +252,8 @@ int leven_distance(std::string str1, std::string str2)
     int n;
     m = (int)strlen(str1.c_str());
     n = (int)strlen(str2.c_str());
-    //std::cout << "me: " << m << "\n";
     //Initializing my dp matrix
    
-   // printf("m,n: %d,%d\n", m, n);
     int dp[m + 1][n + 1]; //an extra box for when looking at the empty string prefix of either str1 or str2 or both
 
     //filling matrix
@@ -346,5 +283,3 @@ int leven_distance(std::string str1, std::string str2)
     }
     return (dp[m][n]);
 }
-
-//Thinking about all the comparisons we'll have to do, we may need to store the information in an array 
