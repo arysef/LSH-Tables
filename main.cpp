@@ -59,7 +59,8 @@ int main() {
         //mapping an index to the read string and updating the index -- needed for Leven distance
         idx_to_string_map.insert({idx, str_seq});
         idx += 1;
-
+        //adding the string to a stored vector of dna sequences
+        dna_arr.push_back(str_seq);
         // heartbeat for insertion
         if (count % 10000 == 0){
             uint32_t min = getSequenceMinHash(str_seq, 0, 10);
@@ -95,7 +96,19 @@ int main() {
     }
 
    std::cout << "Time to insert = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << std::endl;
+    
+    //Brute Force Testing
+    int keys[10] = {308597, 319039, 464183, 394249, 439143, 442117, 18615, 153262, 260764, 82983};
+    for ( int i = 0; i < 10; i++) {
+        string seq_arb = idx_to_string_map.at(keys[i]);
+        cout << keys[i] << ": " << seq_arb << "\n";
+        vector<string> brute_10 = brute_topk(10, seq_arb, dna_arr);
+        for (int j = 0; j < 10; j++) {
+            cout << j << "th closest string: " << brute_10.at(j) << "\n";
+        }
 
+    }
+    
     kseq_destroy(seq);
     fclose(fp);
     return 0;
