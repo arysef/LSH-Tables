@@ -76,3 +76,4 @@ for val in vals:
 	if val is not current: 
 		jaccards.append(jaccard(current, val, 6))
 print(sum(jaccards)/len(jaccards))
+print(len(my_seqs))

@@ -79,27 +79,11 @@ int main() {
     while (kseq_read(seq) >= 0) {
         
         string str_seq = string(seq->seq.s);
-        /*
-        if (count == 0) {
-            char buffer[str_seq.length()];
-            str_seq.copy(buffer, str_seq.length(), 0);
-            seq0 = buffer;
-            cout << seq0 << "\n";
-            cout << "Hello" << "\n";
-            cout << str_seq << "\n";
-            seq0_hashes[0] = getSequenceMinHash(str_seq, 0, 6);
-            seq0_hashes[1] = getSequenceMinHash(str_seq, 1, 6);
-            seq0_hashes[2] = getSequenceMinHash(str_seq, 2, 6);
-            seq0_hashes[3] = getSequenceMinHash(str_seq, 3, 6);
-        }
-        */
-        //mapping an index to the read string and updating the index
+        //mapping an index to the read string and updating the index -- needed for Leven distance
         idx_to_string_map.insert({idx, str_seq});
         idx += 1;
-        //Trying to get basic minHash of sequence 
-        //This is just sanity check: we would expect MinHash of sequence to in most cases be smaller than hash of sequence itself
 
-        //cout << full_hash << "\n";
+        //heartbeat for insertion
         if (count % 10000 == 0){
             uint32_t min = getSequenceMinHash(str_seq, seed, 10);
             uint32_t full_hash;
@@ -108,8 +92,6 @@ int main() {
             cout << count << " " << full_hash << " " << min << "\n";
         }
         insert_into_lsh(str_seq, count, 4, lsh2);
-        //unsigned int h2[] = {1, 2, 4};
-        //lsh2->insert(1, h2);
         count += 1;
     }
     
@@ -117,6 +99,7 @@ int main() {
     for (int i = 0; i < 10; i++) {
         cout << seq_top10[i] << "\n";
     }
+    // below are the test values that we used 
     unsigned int idxs[10] =  {308597, 319039, 464183, 394249, 439143, 442117, 18615, 153262, 260764, 82983};
     cout << "Experiment begins" << "\n";
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -129,6 +112,8 @@ int main() {
         seq_hashes[2] = getSequenceMinHash(seq, 2, 6);
         seq_hashes[3] = getSequenceMinHash(seq, 3, 6);
         lsh2->top_k(1, 10, seq_hashes, seq_top10);
+        
+        // Uncomment below to print top k for each sequence in test values
         //cout << "Top 10 for Index: " << idx << "\n";
         for (int j = 0; j < 10; j++) {
             //cout << seq_top10[j] << "\n";
